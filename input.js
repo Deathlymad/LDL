@@ -72,7 +72,7 @@ export function holdingJump() {
 
 export function pickingUp() {
 	let ret = keyDown("KeyE");
-    lastKeys["KeyE"] = true;
+    //lastKeys["KeyE"] = true;
     return ret;
 }
 

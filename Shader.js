@@ -46,7 +46,7 @@ Shader.prototype.bind = function() {
 }
 //get which program is currently bound
 Shader.prototype.get = function() {
-	return Shader.program
+	return this.program
 }
 //get attrribute handle from shader
 Shader.prototype.getAttrib = function (name) {

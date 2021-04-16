@@ -1,3 +1,9 @@
+import {Sprite} from "./Sprite.js"
+import {mat4, vec2, vec3, quat} from "./gl-matrix-min.js"
+import {PositionalAudio, walk_wood} from "./audio.js"
+import {updateRegistry, menu} from "./state.js"
+import {getItemSprite} from "./item.js"
+import {pickUp} from "./inventory.js"
 
 //Preset Rotations of the object.
 export let Orientation = {
@@ -26,6 +32,7 @@ export let GameObject = function(spritePath, position, size, type, scale = vec2.
 //compute new transformation for the sprite
 GameObject.prototype.calculateTransform = function() {
     let transform = mat4.create();
+    
     mat4.fromRotationTranslationScale(
         transform,
         this.orientation == Orientation.ROTATED_45 ? quat.fromEuler(quat.create(), 0, 0, 45) : quat.create(),
@@ -76,11 +83,12 @@ Object.defineProperty(MobileGameObject.prototype, 'constructor', {
     writable: true });
 //apply teleportation
 MobileGameObject.prototype.handlePhysicsChange = function() {
-    if (this.teleport) {
+    if (typeof this.teleport !== 'undefined') {
         this.velocity[0] = 0;
         this.velocity[1] = 0;
         //player.onGround = false;
-        this.setPosition(teleport)
+        this.setPosition(this.teleport)
+        delete this.teleport
     }
 }
 //teleport ignoring all other updates
@@ -152,11 +160,14 @@ Object.defineProperty(Interactable.prototype, 'constructor', {
     enumerable: false, // so that it does not appear in 'for in' loop
     writable: true });
 Interactable.prototype.onInteract = function(obj) {
+    console.log("ping")
     menu.setSprite(getItemSprite(this.pickup, mat4.fromScaling(mat4.create(), vec3.fromValues(5, 5, 5)), null, true));
     menu.cooldown = -1;
     pickUp(this);
 }
-Interactable.prototype.canInteract = function(obj) {return obj.isPlayer();}
+Interactable.prototype.canInteract = function(obj) {
+    return obj.isPlayer();
+}
 
 
 export let Teleporter = function(spritePath, position, size, scale = vec2.fromValues(1, 1), offset = vec2.fromValues(0, 0), orientation = Orientation.DEFAULT) {
@@ -187,10 +198,10 @@ DoorGameObject.prototype.onCollide = function(intersection, other) {
         new PositionalAudio(this.position, "assets/sounds/door/door_open.wav", false).play();
         this.timer = 0.3;
         this.state = "opening";
-        updateRegistry.registerUpdate("door" + this.position.toString(), DoorGameObject.update.bind(this))
+        updateRegistry.registerUpdate("door" + this.position.toString(), this.update.bind(this))
     } else if (this.state == "open") {
         this.timer = 1;
-        updateRegistry.registerUpdate("door" + this.position.toString(), DoorGameObject.update.bind(this))
+        updateRegistry.registerUpdate("door" + this.position.toString(), this.update.bind(this))
     } else if (this.state == "closing") {
         this.timer = 0.3 - this.timer;
         this.state = "opening";

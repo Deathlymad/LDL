@@ -1,5 +1,6 @@
 import { vec3 } from "./gl-matrix-min.js"
 import { Sprite } from "./Sprite.js"
+import {itemFadeInAnim, itemFadeOutAnim} from "./inventory.js"
 
 //Core Data
 export let gl = null;

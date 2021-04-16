@@ -1,8 +1,9 @@
-import * as Shader from "./Shader.js"
+import {Shader} from "./Shader.js"
 import * as Sprite from "./Sprite.js"
 import {Projection, View} from "./Transform.js"
 import {mat4, vec2, vec3, quat} from "./gl-matrix-min.js"
-import {level, player, gl, setGl, menu, inventory} from "./state.js"
+import {level, player, gl, setGl, menu} from "./state.js"
+import {inventory} from "./inventory.js"
 
 let shaders = {};
 
@@ -61,11 +62,11 @@ export function init(c) {
 }
 
 function initShaders() {
-	shaders["defaultShader"] = new Shader.Shader("shader", "shader")
-	shaders["lightShader"] = new Shader.Shader("shader", "light")
-	shaders["blurShader"] = new Shader.Shader("shader", "blur")
-	shaders["bgShader"] = new Shader.Shader("shader", "bg-light")
-
+	shaders["defaultShader"] = new Shader("shader", "shader")
+	shaders["lightShader"] = new Shader("shader", "light")
+	shaders["blurShader"] = new Shader("shader", "blur")
+	shaders["bgShader"] = new Shader("shader", "bg-light")
+    
 	shaders["defaultShader"].bind();
     let defaultPositionAttribute = gl.getAttribLocation(shaders["defaultShader"].get(), 'position');
     let defaultTexCoordAttribute = gl.getAttribLocation(shaders["defaultShader"].get(), 'texCoord');

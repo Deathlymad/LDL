@@ -1,7 +1,8 @@
 import { mat4, vec3, quat } from "./gl-matrix-min.js"
 import { Sprite } from "./Sprite.js"
-import {gl, level} from "./state.js"
-
+import {gl, level, updateRegistry, menu} from "./state.js"
+import {menuRight, menuDown, menuLeft, menuUp, pickingUp} from "./input.js"
+import {getItemSprite} from "./item.js"
 
 export let inventory = {
     opened: false,
@@ -47,7 +48,7 @@ export function pickUp(item) {
 }
 
 //handlesthe inventory updates.
-function updateInventory() {
+export function updateInventory() {
     if (menuRight()) {
         inventory.cursorPosition += 1;
     }
@@ -93,7 +94,7 @@ function updateInventory() {
 }
 
 //animate the item when picked up
-function itemFadeInAnim(sprite, name, strtPos, strtScale, frames) {
+export function itemFadeInAnim(sprite, name, strtPos, strtScale, frames) {
 	if (typeof this.cnt === "undefined")
 		this.cnt = 0;
 	else
@@ -126,7 +127,7 @@ function itemFadeInAnim(sprite, name, strtPos, strtScale, frames) {
 }
 
 //animate the item when picked up
-function itemFadeOutAnim(sprite, newSprite, name, tgtPos, tgtScale, frames) {
+export function itemFadeOutAnim(sprite, newSprite, name, tgtPos, tgtScale, frames) {
 	if (typeof this.cnt === "undefined")
 		this.cnt = 0;
 	else

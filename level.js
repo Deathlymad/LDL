@@ -1,4 +1,5 @@
-import {Sprite, GameObject, Texture2D} from "./Sprite.js"
+import {Sprite, Texture2D} from "./Sprite.js"
+import {GameObject, CollidableGameObject, DoorGameObject, Teleporter, Interactable, VerticalCollidableGameObject, ForceTeleporter} from "./GameObject.js"
 import {level, menu, setPlayer, player} from "./state.js"
 import {mat4, vec2, vec3, quat} from "./gl-matrix-min.js"
 import {readJSON} from "./util.js"
@@ -84,30 +85,32 @@ function initLevel(id, rawData) {
 			let pos = vec3.fromValues(entry["pos"]["x"] * X_SCALE, entry["pos"]["y"] * Y_SCALE, 0)
 			scale = vec3.fromValues(entry["size"]["width"] * X_SCALE * 0.5, entry["size"]["height"] * Y_SCALE * 0.5, 0)
 			mat4.fromRotationTranslationScale(transformation, quat.create(), pos, scale)
-			level.objects.push(new Sprite(spriteName, transformation, entry["type"]))
+			level.objects.push(new Sprite(spriteName, transformation))
 			break;
 		case "collidable":
+			level.objects.push(new CollidableGameObject(spriteName, pos1, size, entry["type"], scale, offset, orientation))
+			break;
 		case "xcollidable":
-			level.objects.push(new GameObject(spriteName, pos1, size, entry["type"], scale, offset, orientation))
+			level.objects.push(new VerticalCollidableGameObject(spriteName, pos1, size, entry["type"], scale, offset, orientation))
 			break;
 		case "door":
-            obj = new GameObject(spriteName, pos1, size, "door", scale, offset, orientation);
+            obj = new DoorGameObject(spriteName, pos1, size, "door", scale, offset, orientation);
             obj.door = new Sprite("assets/Door.png", mat4.create());
 			level.objects.push(obj)
 			break;
 		case "interactable":
-            obj = new GameObject(spriteName, pos1, size, "interactable", scale, offset, orientation);
+            obj = new Interactable(spriteName, pos1, size, "interactable", scale, offset, orientation);
             obj.pickup = entry["pickup"];
 			level.objects.push(obj)
 			break;
 		case "fire":
-            obj = new GameObject(spriteName, pos1, size, entry["type"], scale, offset, orientation);
+            obj = new ForceTeleporter(spriteName, pos1, size, entry["type"], scale, offset, orientation);
 			obj.sprite.texture.frames = 6
             obj.to = entry["to"];
 			level.objects.push(obj)
 			break;
 		case "teleporter":
-            obj = new GameObject(spriteName, pos1, size, entry["type"], scale, offset, orientation);
+            obj = new Teleporter(spriteName, pos1, size, entry["type"], scale, offset, orientation);
             obj.to = entry["to"];
 			level.objects.push(obj)
 			break;

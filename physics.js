@@ -1,13 +1,12 @@
-import {level, player, menu, inventory} from "./state.js"
-import {getItemSprite, pickUp, ITEM_SOUNDS} from "./item.js"
-import {walkingLeft, walkingRight, jumping, pickingUp, holdingJump} from "./input.js"
+import {level, player, menu} from "./state.js"
+import {ITEM_SOUNDS} from "./item.js"
+import {pickUp, inventory} from "./inventory.js"
 import {vec2, mat4, vec3} from "./gl-matrix-min.js"
-import {GameObject, Sprite, Orientation} from "./Sprite.js"
+import {Sprite} from "./Sprite.js"
 import {loadLevel} from "./level.js"
-import {PositionalAudio, walk_wood} from "./audio.js"
+import {GameObject, Orientation} from "./GameObject.js"
+import {pickingUp} from "./input.js"
 
-const PLAYER_SPEED = 2.5;
-const JUMP_SPEED = 13; // 6.75
 const GRAVITATION = 38; // 10
 
 export function testIntersection(a, b) {
@@ -62,33 +61,8 @@ export function testIntersection(a, b) {
 }
 
 export function update(delta) {
-    let velx = 0;
-    
-    //handle movement 
-    if (walkingLeft()) {
-		velx -= PLAYER_SPEED;
-    }
-    if (walkingRight()) {
-        velx += PLAYER_SPEED;
-    }
-    if (level.upsideDown) {
-        velx = -velx;
-    }
-    if (velx > 0) {
-		player.orientation = Orientation.DEFAULT;
-    } else if (velx < 0) {
-		player.orientation = Orientation.MIRRORED;
-    }
-    if (player.onGround && jumping()) {
-        player.velocity[1] = JUMP_SPEED;
-    }
-    if (!holdingJump()) {
-        player.velocity[1] = Math.min(0, player.velocity[1]);
-    }
-
     //handle falling
     if (player.velocity[1] >= 0) player.maxY = player.position[1] - player.halfSize[1];
-    player.velocity[0] = velx;
     player.velocity[1] -= GRAVITATION * delta;
 
 
@@ -96,17 +70,17 @@ export function update(delta) {
     let positionDelta = vec2.scale(vec2.create(), player.velocity, delta);
     player.setPosition(vec2.add(player.position, player.position, positionDelta));
     player.onGround = false;
-	player.canInteract = false
+	let canInteract = false
 
 	let stageTeleportation = false
-
+    
     for (let obj of level.objects) {
         if (!(obj instanceof GameObject)) continue;
         let intersection = testIntersection(player, obj);
         if (intersection) { //TODO abstract this part somehow. add game object subtypes maybe
             
             obj.onCollide(intersection, player)
-            player.canInteract = player.canInteract || obj.canInteract(player)
+            canInteract = canInteract || obj.canInteract(player)
             if (pickingUp()) {
                 obj.onInteract(player)
             }
@@ -114,17 +88,9 @@ export function update(delta) {
     }
 
     player.handlePhysicsChange()
-
-    let walking = player.onGround && player.velocity[0] != 0;
-
-	//TODO add state event maybe?
-    if (walking && walk_wood.paused) {
-        walk_wood.play();
-    }
-    if (!walking && !walk_wood.paused) {
-        walk_wood.pause();
-    }
+    player.setInteraction(canInteract);
     
+
     //handle level exit. TODO maybe abstract as well
     let exitDir = vec2.sub(vec2.create(), level.exit, player.position);
     if (Math.abs(exitDir[0]) < player.halfSize[0] && Math.abs(exitDir[1]) < player.halfSize[1]) {

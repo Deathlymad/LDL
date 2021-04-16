@@ -172,10 +172,10 @@ let Mesh = function(vertices, uv) {
 //binds the buffers to the data input
 Mesh.prototype.bindVAO = function(shader) {
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.squareBuffer);
-	gl.vertexAttribPointer(Shader.getAttrib("position"), VERTEX_DIM, gl.FLOAT, false, 0, 0);
+	gl.vertexAttribPointer(shader.getAttrib("position"), VERTEX_DIM, gl.FLOAT, false, 0, 0);
 
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.squareTexCoordBuffer);
-	gl.vertexAttribPointer(Shader.getAttrib("texCoord"), UV_DIM, gl.FLOAT, false, 0, 0);
+	gl.vertexAttribPointer(shader.getAttrib("texCoord"), UV_DIM, gl.FLOAT, false, 0, 0);
 }
 //renders Mesh
 Mesh.prototype.draw = function() {
@@ -199,11 +199,12 @@ export let Sprite = function(spritePath, transformation, parent) {
 	}
 	this.transform = typeof(transformation) === "undefined" ? mat4.create() : mat4.clone(transformation);
 	this.m = mat4.create();
-	this.parent = typeof(parent) === "undefined" ? null : parent;
+	this.parent = parent
 }
 Sprite.prototype.getTransformation = function() {
-	if (this.parent !== null)
+	if (this.parent) {
 		mat4.mul(this.m, this.parent.getTransformation(), this.transform);
+    }
 	else
 		mat4.copy(this.m, this.transform);
 	return this.m;
@@ -220,7 +221,7 @@ Sprite.prototype.draw = function(shader) {
 
 	gl.uniformMatrix4fv(shader.getUniform('M'), false, this.getTransformation()); // write model transformation
 	gl.uniform1i(shader.getUniform('texture'), 0);
-	Sprite.MESH.bindToVAO(shader);
+	Sprite.MESH.bindVAO(shader);
 	Sprite.MESH.draw();
 }
 
