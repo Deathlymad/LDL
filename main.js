@@ -2,13 +2,14 @@ import { init as initGraphics, update as updateGraphics, projection, updateView 
 import {mat4, vec3, vec2} from "./gl-matrix-min.js"
 import {update as updatePhysics} from "./physics.js"
 import { init as initInput, update as updateInput, toggleInventory, menuUp, menuDown, menuLeft, menuRight, pickingUp} from "./input.js"
-import {gl, player, level, menu, setPlayer, updateRegistry} from "./state.js"
+import {gl, setPlayer, player, level, menu, setPlayer, updateRegistry} from "./state.js"
 import {GameObject, Sprite} from "./obj/Sprite.js";
 import {loadLevel} from "./level.js"
 import {updateInventory} from "./inventory.js"
 import {init as initResource} from "./resource.js"
 import {getItemSprite} from "./item.js"
 import {updateAudio, initAudio, music, walk_wood} from "./audio.js"
+import {Player} from "./player.js"
 
 //timekeeper
 var lastTick = null;
@@ -31,6 +32,9 @@ function main() {
     initAudio();
 
     initResource(function() {
+        
+        setPlayer(new Player());
+        
         loadLevel(1) //TODO maybe remove. maybe replace with menu
 
         window.running = true;

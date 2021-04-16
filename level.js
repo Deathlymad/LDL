@@ -155,14 +155,5 @@ function initLevel(id, rawData) {
 	level.isInitialized = false
     
     level.start = vec2.fromValues(levelData["start"]["x"], levelData["start"]["y"]);
-    //TODO move maybe. Or create player object.
-    setPlayer(new GameObject("./assets/walk_circle_halved.png", level.start, vec2.fromValues(1, 3), "player", vec2.fromValues(3.5, 3.5 / 3), vec2.fromValues(0, -0.1)));
-    player.velocity = vec2.fromValues(0, 0);
-    player.onGround = false;
-    player.sprite.texture.frames = 5;
-	let transMat = mat4.create()
-	mat4.fromRotationTranslationScale(transMat, quat.create(), vec3.fromValues(0, 1, 0), vec3.fromValues(3/4, 3/4, 1))
-	player.eyeSprite = new Sprite("./assets/eye_halved.png", transMat, "animation", player.sprite)
-	player.eyeSprite.texture.frames = 5;
-	player.canInteract = false
+    player.forceTeleport(level.start)
 }

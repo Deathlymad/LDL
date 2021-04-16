@@ -63,6 +63,8 @@ export function testIntersection(a, b) {
 
 export function update(delta) {
     let velx = 0;
+    
+    //handle movement 
     if (walkingLeft()) {
 		velx -= PLAYER_SPEED;
     }
@@ -84,11 +86,13 @@ export function update(delta) {
         player.velocity[1] = Math.min(0, player.velocity[1]);
     }
 
+    //handle falling
     if (player.velocity[1] >= 0) player.maxY = player.position[1] - player.halfSize[1];
     player.velocity[0] = velx;
     player.velocity[1] -= GRAVITATION * delta;
 
 
+    //apply change
     let positionDelta = vec2.scale(vec2.create(), player.velocity, delta);
     player.setPosition(vec2.add(player.position, player.position, positionDelta));
     player.onGround = false;
@@ -100,74 +104,16 @@ export function update(delta) {
         if (!(obj instanceof GameObject)) continue;
         let intersection = testIntersection(player, obj);
         if (intersection) { //TODO abstract this part somehow. add game object subtypes maybe
-            if (obj.type === "collidable") { //can collide in any direction
-                player.position[1] -= intersection[1];
-                if (intersection[1] == 0 || obj.orientation != Orientation.ROTATED_45) {
-                    player.position[0] -= intersection[0];
-                }
-                if (intersection[0] != 0) {
-                    player.velocity[0] = 0;
-                }
-                if (intersection[1] != 0){
-                    player.velocity[1] = 0;
-                    if (intersection[1] < 0) player.onGround = true;
-                }
-			} else if (obj.type === "xcollidable") { //only collides vertically
-                if (intersection[0] == 0 && intersection[1] < 0 && player.velocity[1] < 0 && player.maxY >= obj.position[1] + obj.halfSize[1] - 0.0001) {
-					player.setPosition(vec2.sub(player.position, player.position, intersection));
-                    player.velocity[1] = 0;
-                    player.onGround = true;
-                }
-            } else if (obj.type === "interactable") { //collision allows interaction
-				player.canInteract = true
-				if (pickingUp()) {
-                    menu.setSprite(getItemSprite(obj.pickup, mat4.fromScaling(mat4.create(), vec3.fromValues(5, 5, 5)), null, true));
-                    menu.cooldown = -1;
-					pickUp(obj);
-				}
-			} else if (obj.type === "teleporter") { //special interactable that manipulates position
-				player.canInteract = true
-				if (pickingUp()) {
-					stageTeleportation = vec2.fromValues(obj.to["x"], obj.to["y"])
-				}
-            } else if (obj.type === "fire") { //force teleporter
-					stageTeleportation = vec2.fromValues(obj.to["x"], obj.to["y"])
-            } else if (obj.type == "door") { //passive object that changes state
-                if (!obj.state) {
-                    new PositionalAudio(obj.position, "assets/sounds/door/door_open.wav", false).play();
-                    obj.timer = 0.3;
-                    obj.state = "opening";
-                } else if (obj.state == "open") {
-                    obj.timer = 1;
-                } else if (obj.state == "closing") {
-                    obj.timer = 0.3 - obj.timer;
-                    obj.state = "opening";
-                }
-            }
-        }
-        if (obj.type == "door" && obj.timer > 0) { //door state transition
-            obj.timer -= delta;
-            if (obj.timer <= 0) {
-                if (obj.state == "opening") {
-                    obj.state = "open";
-                    obj.timer = 1;
-                } else if (obj.state == "open") {
-                    new PositionalAudio(obj.position, "assets/sounds/door/door_close.wav", false).play();
-                    obj.state = "closing";
-                    obj.timer = 0.3;
-                } else if (obj.state == "closing") {
-                    obj.state = null;
-                }
+            
+            obj.onCollide(intersection, player)
+            player.canInteract = player.canInteract || obj.canInteract(player)
+            if (pickingUp()) {
+                obj.onInteract(player)
             }
         }
     }
 
-	if (stageTeleportation !== false) { //handle teleportation
-		player.velocity[0] = 0;
-		player.velocity[1] = 0;
-		//player.onGround = false;
-		player.setPosition(stageTeleportation)
-	}
+    player.handlePhysicsChange()
 
     let walking = player.onGround && player.velocity[0] != 0;
 
