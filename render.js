@@ -2,8 +2,9 @@ import {Shader} from "./Shader.js"
 import * as Sprite from "./Sprite.js"
 import {Projection, View} from "./Transform.js"
 import {mat4, vec2, vec3, quat} from "./gl-matrix-min.js"
-import {level, player, gl, setGl, menu} from "./state.js"
-import {inventory} from "./inventory.js"
+import { Menu } from "./menu.js"
+import {level, player, gl, setGl} from "./state.js"
+import {Inventory} from "./inventory.js"
 
 let shaders = {};
 
@@ -42,23 +43,17 @@ export function init(c) {
 	updateViewMat = true;
 
     //Container Texture for when the inventory is open
-	menu.backgroundContainer = new Sprite.Sprite(null, mat4.create(), null)
-	menu.backgroundContainer.texture = new Sprite.DynamicTexture2D() //TODO hackery but static, don't judge me
+	Menu.backgroundContainer = new Sprite.Sprite(null, mat4.create(), null)
+	Menu.backgroundContainer.texture = new Sprite.DynamicTexture2D() //TODO hackery but static, don't judge me
     //container for rendering blur
-	menu.blurredBackgroundContainer = new Sprite.Sprite(null, mat4.create(), null)
-	menu.blurredBackgroundContainer.texture = new Sprite.DynamicTexture2D() //TODO hackery but static, don't judge me
+	Menu.blurredBackgroundContainer = new Sprite.Sprite(null, mat4.create(), null)
+	Menu.blurredBackgroundContainer.texture = new Sprite.DynamicTexture2D() //TODO hackery but static, don't judge me
 
     //handle window resizing
     window.addEventListener('resize', updateProjection);
     window.addEventListener('orientationchange', updateProjection);
     window.addEventListener('fullscreenchange', updateProjection);
     
-    //TODO MOVE
-    inventory.board = new Sprite.Sprite("assets/Inventar_Board.png", mat4.fromScaling(mat4.create(), vec3.fromValues(8, 8, 8)));
-    inventory.glowingPostit = new Sprite.Texture2D("assets/Glowing_sticky_Bitch.png");
-    inventory.postit = new Sprite.Texture2D("assets/dull_sticky_bitch.png");
-
-
 }
 
 function initShaders() {
@@ -105,18 +100,18 @@ export function update() {
 	}
 
     
-    if (inventory.end_end && !inventory.opened) { //TODO Move condition
+    if (Inventory.end_end && !Inventory.opened) { //TODO Move condition
         shaders["defaultShader"].bind();
         credits.draw(shaders["defaultShader"]);
         gl.uniformMatrix4fv(shaders["defaultShader"].getUniform('VP'), false, mat4.create());
     } else {
 
-        if (inventory.opened || menu.sprite !== null)
+        if (Inventory.opened || Menu.current !== null)
         {
             if (lastSwitch === 0)
             {
                 lastSwitch = 1
-                menu.backgroundContainer.texture.bindFramebuffer()
+                Menu.backgroundContainer.texture.bindFramebuffer()
             }
         }
         else {
@@ -128,15 +123,15 @@ export function update() {
             //drawBaseShader();
         if (lastSwitch === 1) {
             lastSwitch = 2;
-            menu.backgroundContainer.texture.unbindFramebuffer()
+            Menu.backgroundContainer.texture.unbindFramebuffer()
 
-            menu.blurredBackgroundContainer.texture.bindFramebuffer()
+            Menu.blurredBackgroundContainer.texture.bindFramebuffer()
             shaders["blurShader"].bind();
             gl.uniformMatrix4fv(shaders["blurShader"].getUniform('VP'), false, mat4.create());
             gl.uniform1fv(shaders["blurShader"].getUniform('gaussian'), [0.000533, 0.000799, 0.001124, 0.001487, 0.001849, 0.00216, 0.002371, 0.002445, 0.002371, 0.00216, 0.001849, 0.001487, 0.001124, 0.000799, 0.000533, 0.000799, 0.001196, 0.001684, 0.002228, 0.002769, 0.003235, 0.003551, 0.003663, 0.003551, 0.003235, 0.002769, 0.002228, 0.001684, 0.001196, 0.000799, 0.001124, 0.001684, 0.002371, 0.003136, 0.003898, 0.004554, 0.004999, 0.005157, 0.004999, 0.004554, 0.003898, 0.003136, 0.002371, 0.001684, 0.001124, 0.001487, 0.002228, 0.003136, 0.004148, 0.005157, 0.006024, 0.006613, 0.006822, 0.006613, 0.006024, 0.005157, 0.004148, 0.003136, 0.002228, 0.001487, 0.001849, 0.002769, 0.003898, 0.005157, 0.006411, 0.007489, 0.008221, 0.00848, 0.008221, 0.007489, 0.006411, 0.005157, 0.003898, 0.002769, 0.001849, 0.00216, 0.003235, 0.004554, 0.006024, 0.007489, 0.008748, 0.009603, 0.009906, 0.009603, 0.008748, 0.007489, 0.006024, 0.004554, 0.003235, 0.00216, 0.002371, 0.003551, 0.004999, 0.006613, 0.008221, 0.009603, 0.010542, 0.010875, 0.010542, 0.009603, 0.008221, 0.006613, 0.004999, 0.003551, 0.002371, 0.002445, 0.003663, 0.005157, 0.006822, 0.00848, 0.009906, 0.010875, 0.011218, 0.010875, 0.009906, 0.00848, 0.006822, 0.005157, 0.003663, 0.002445, 0.002371, 0.003551, 0.004999, 0.006613, 0.008221, 0.009603, 0.010542, 0.010875, 0.010542, 0.009603, 0.008221, 0.006613, 0.004999, 0.003551, 0.002371, 0.00216, 0.003235, 0.004554, 0.006024, 0.007489, 0.008748, 0.009603, 0.009906, 0.009603, 0.008748, 0.007489, 0.006024, 0.004554, 0.003235, 0.00216, 0.001849, 0.002769, 0.003898, 0.005157, 0.006411, 0.007489, 0.008221, 0.00848, 0.008221, 0.007489, 0.006411, 0.005157, 0.003898, 0.002769, 0.001849, 0.001487, 0.002228, 0.003136, 0.004148, 0.005157, 0.006024, 0.006613, 0.006822, 0.006613, 0.006024, 0.005157, 0.004148, 0.003136, 0.002228, 0.001487, 0.001124, 0.001684, 0.002371, 0.003136, 0.003898, 0.004554, 0.004999, 0.005157, 0.004999, 0.004554, 0.003898, 0.003136, 0.002371, 0.001684, 0.001124, 0.000799, 0.001196, 0.001684, 0.002228, 0.002769, 0.003235, 0.003551, 0.003663, 0.003551, 0.003235, 0.002769, 0.002228, 0.001684, 0.001196, 0.000799, 0.000533, 0.000799, 0.001124, 0.001487, 0.001849, 0.00216, 0.002371, 0.002445, 0.002371, 0.00216, 0.001849, 0.001487, 0.001124, 0.000799, 0.000533]);
 
-            menu.backgroundContainer.draw(shaders["blurShader"]);
-            menu.blurredBackgroundContainer.texture.unbindFramebuffer()
+            Menu.backgroundContainer.draw(shaders["blurShader"]);
+            Menu.blurredBackgroundContainer.texture.unbindFramebuffer()
         }
         if (lastSwitch > 0)
             drawGUI();
@@ -149,28 +144,28 @@ export function update() {
 function drawGUI() {
 	shaders["defaultShader"].bind();
 	gl.uniformMatrix4fv(shaders["defaultShader"].getUniform('VP'), false, mat4.create());
-	menu.blurredBackgroundContainer.draw(shaders["defaultShader"]);
+	Menu.blurredBackgroundContainer.draw(shaders["defaultShader"]);
 	gl.uniformMatrix4fv(shaders["defaultShader"].getUniform('VP'), false, projection.get());
 
     //TODO THIS NEEDS TO MOVE
-    if (menu.sprite !== null) {
-        menu.sprite.draw(shaders["defaultShader"]);
-    } else if (inventory.opened) {
-        inventory.board.draw(shaders["defaultShader"]);
-        for (let i = 0; i < inventory.objects.length; i++) {
-            if (inventory.level_end && i < level.id - 1) {
+    if (Menu.current !== null) {
+        Menu.current.draw(shaders["defaultShader"]);
+    } else if (Inventory.opened) {
+        Inventory.board.draw(shaders["defaultShader"]);
+        for (let i = 0; i < Inventory.objects.length; i++) {
+            if (Inventory.level_end && i < level.id - 1) {
                 continue;
             }
-            if (inventory.cursorPosition == i) {
-                inventory.postits[i].texture = inventory.glowingPostit;
+            if (Inventory.cursorPosition == i) {
+                Inventory.postits[i].texture = Inventory.glowingPostit;
             } else {
-                inventory.postits[i].texture = inventory.postit;
+                Inventory.postits[i].texture = Inventory.postit;
             }
-            inventory.postits[i].draw(shaders["defaultShader"]);
-            inventory.objects[i].draw(shaders["defaultShader"]);
+            Inventory.postits[i].draw(shaders["defaultShader"]);
+            Inventory.objects[i].draw(shaders["defaultShader"]);
         }
         
-        if (inventory.level_end && level.id == 1) {
+        if (Inventory.level_end && level.id == 1) {
             new Sprite.Sprite("assets/endLvTut.png", mat4.fromRotationTranslationScale(mat4.create(), quat.create(), vec3.fromValues(0, 4, 0), vec3.fromValues(5, 1, 1))).draw(shaders["defaultShader"]);
         }
     }

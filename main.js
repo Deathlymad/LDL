@@ -2,10 +2,11 @@ import { init as initGraphics, update as updateGraphics, projection, updateView 
 import {mat4, vec3, vec2} from "./gl-matrix-min.js"
 import {update as updatePhysics} from "./physics.js"
 import { init as initInput, update as updateInput, toggleInventory, menuUp, menuDown, menuLeft, menuRight, pickingUp} from "./input.js"
-import {gl, setPlayer, player, level, menu, updateRegistry} from "./state.js"
+import {gl, setPlayer, player, level, updateRegistry, inventory, setInventory} from "./state.js"
+import {Menu} from "./menu.js"
+import {Inventory} from "./inventory.js"
 import {Sprite} from "./Sprite.js";
 import {loadLevel} from "./level.js"
-import {updateInventory, inventory} from "./inventory.js"
 import {init as initResource} from "./test/resource.js"
 import {updateAudio, initAudio, music, walk_wood} from "./audio.js"
 import {Player} from "./player.js"
@@ -25,7 +26,9 @@ function main() {
     initGraphics(document.getElementById('glCanvas'));
     initInput();
     initAudio();
-
+    
+    setInventory(new Inventory())
+    
     initResource(function() {
         
         setPlayer(new Player());
@@ -79,24 +82,24 @@ function update(now) {
             inventory.opened = !inventory.opened;
             inventory.cursorPosition = 0;
         }
-        if (menu.sprite !== null) { //TODO create menu object
+        if (Menu.current !== null) { //TODO create menu object
             walk_wood.pause();
-            if (menu.cooldown == -1) {
+            if (Menu.current.cooldown == -1) {
                 if (pickingUp()) {
                     if (music.paused) {
                         music.play();
                     }
-                    menu.setSprite(null);
+                    Menu.current.close();
                 }
             } else {
-                menu.cooldown -= FRAME_TIME / 1000;
-                if (menu.cooldown < 0) {
-                    menu.setSprite(null);
+                Menu.current.cooldown -= FRAME_TIME / 1000;
+                if (Menu.current.cooldown < 0) {
+                    Menu.current.close();
                 }
             }
         } else if (inventory.opened) {
             walk_wood.pause();
-            updateInventory();
+            inventory.updateInventory();
         } else if (!inventory.end_end) {
             //THIS IS THE MAIN UPDATE
             player.handleInput()

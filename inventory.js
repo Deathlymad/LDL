@@ -1,22 +1,31 @@
 import { mat4, vec3, quat } from "./gl-matrix-min.js"
-import { Sprite } from "./Sprite.js"
-import {gl, level, updateRegistry, menu} from "./state.js"
+import { Sprite, Texture2D } from "./Sprite.js"
+import { Menu } from "./menu.js"
+import {gl, level, updateRegistry} from "./state.js"
 import {menuRight, menuDown, menuLeft, menuUp, pickingUp} from "./input.js"
 import {getItemSprite} from "./item.js"
-
-export let inventory = {
-    opened: false,
-    level_end: false,
-    cursorPosition: 0,
-	objects: [],
-    postits: []
-};
-
 
 const INVENTORY_SIZE = 6;
 export const INVENTORY_HEIGHT = 2;
 export const INVENTORY_WIDTH = 4;
 const INVENTORY_SCALE = INVENTORY_SIZE / INVENTORY_HEIGHT;
+
+export let Inventory = function() {
+    Menu.call(this, "assets/Inventar_Board.png", mat4.fromScaling(mat4.create(), vec3.fromValues(8, 8, 8)));
+    this.level_end = false
+    this.cursorPosition = 0
+	this.objects = []
+    this.postits = []
+    
+    this.glowingPostit = new Texture2D("assets/Glowing_sticky_Bitch.png");
+    this.postit = new Texture2D("assets/dull_sticky_bitch.png");
+
+}
+Inventory.prototype = Object.create(Menu.prototype);
+Object.defineProperty(Inventory.prototype, 'constructor', {
+    value: Inventory,
+    enumerable: false, // so that it does not appear in 'for in' loop
+    writable: true });
 
 //compute matrix to put item sprite in the right slot
 function inventoryItemTransform(index) {
@@ -30,52 +39,52 @@ function inventoryItemTransform(index) {
     return transform;
 }
 //adds item to inventory
-export function pickUp(item) {
+Inventory.prototype.pickUp = function (item) {
 	let index = level.objects.indexOf(item);
 	if (index > -1) {
         level.objects.splice(index, 1);
-        let transform = inventoryItemTransform(inventory.objects.length);
+        let transform = inventoryItemTransform(this.objects.length);
 		let m = mat4.create();
         mat4.fromScaling(m, vec3.fromValues(0.25, 0.25, 1));
         mat4.mul(m, transform, m);
 		let sprite = getItemSprite(item.pickup, m, null, false);
-        inventory.objects.push(sprite);
+        this.objects.push(sprite);
 		m = mat4.create();
         mat4.fromScaling(m, vec3.fromValues(0.5, 0.5, 1));
         mat4.mul(m, transform, m);
-        inventory.postits.push(new Sprite("assets/dull_sticky_bitch.png", m));
+        this.postits.push(new Sprite("assets/dull_sticky_bitch.png", m));
 	}
 }
 
 //handlesthe inventory updates.
-export function updateInventory() {
+Inventory.prototype.updateInventory = function() {
     if (menuRight()) {
-        inventory.cursorPosition += 1;
+        this.cursorPosition += 1;
     }
     if (menuLeft()) {
-        inventory.cursorPosition -= 1;
+        this.cursorPosition -= 1;
     }
     if (menuDown()) {
-        inventory.cursorPosition += INVENTORY_WIDTH;
+        this.cursorPosition += INVENTORY_WIDTH;
     }
     if (menuUp()) {
-        inventory.cursorPosition -= INVENTORY_WIDTH;
+        this.cursorPosition -= INVENTORY_WIDTH;
     }
-    inventory.cursorPosition = (inventory.cursorPosition + inventory.objects.length) % inventory.objects.length;
-    if (inventory.level_end) inventory.cursorPosition = Math.max(inventory.cursorPosition, level.id - 1);
+    this.cursorPosition = (this.cursorPosition + this.objects.length) % this.objects.length;
+    if (this.level_end) this.cursorPosition = Math.max(this.cursorPosition, level.id - 1);
     if (pickingUp()) {
-        if (inventory.level_end) {
+        if (this.level_end) {
 
-            let item = inventory.objects[inventory.cursorPosition];
-            inventory.objects.splice(level.id - 1, inventory.objects.length - (level.id - 1));
-            inventory.postits.splice(level.id, inventory.postits.length - level.id);
+            let item = this.objects[this.cursorPosition];
+            this.objects.splice(level.id - 1, this.objects.length - (level.id - 1));
+            this.postits.splice(level.id, this.postits.length - level.id);
             let m = mat4.create();
             mat4.fromScaling(m, vec3.fromValues(0.25, 0.25, 1));
-            item.setTransformation(mat4.mul(m, inventoryItemTransform(inventory.objects.length), m));
-            inventory.objects.push(item);
+            item.setTransformation(mat4.mul(m, inventoryItemTransform(this.objects.length), m));
+            this.objects.push(item);
 
-            inventory.level_end = false;
-            inventory.opened = false;
+            this.level_end = false;
+            this.opened = false;
 
             if (level.id < 7) {
                 if (level.id == 6) {
@@ -84,76 +93,11 @@ export function updateInventory() {
                 loadLevel(level.id + 1);
             }
         } else {
-			if (typeof inventory.objects[inventory.cursorPosition] !== "undefined")
+			if (typeof this.objects[this.cursorPosition] !== "undefined")
 			{
-				menu.setSprite(getItemSprite(inventory.objects[inventory.cursorPosition].item_id, mat4.fromScaling(mat4.create(), vec3.fromValues(5, 5, 5))));
+				menu.setSprite(getItemSprite(this.objects[this.cursorPosition].item_id, mat4.fromScaling(mat4.create(), vec3.fromValues(5, 5, 5))));
 				menu.cooldown = -1;
 			}
         }
     }
-}
-
-//animate the item when picked up
-export function itemFadeInAnim(sprite, name, strtPos, strtScale, frames) {
-	if (typeof this.cnt === "undefined")
-		this.cnt = 0;
-	else
-		this.cnt += 1;
-
-	if (typeof this.tgtPos === "undefined")
-	{
-		this.tgtPos = vec3.create();
-		mat4.getTranslation(this.tgtPos, sprite.transform);
-	}
-	if (typeof this.tgtScale === "undefined")
-	{
-		this.tgtScale = vec3.create();
-		mat4.getScaling(this.tgtScale, sprite.transform);
-	}
-
-	let pos = vec3.create()
-	vec3.lerp(pos, strtPos, this.tgtPos, this.cnt/frames)
-	let scale = vec3.create()
-	vec3.lerp(scale, strtScale, this.tgtScale, this.cnt/frames)
-
-	mat4.fromRotationTranslationScale(sprite.transform, quat.create(), pos, scale);
-
-	if (this.cnt >= frames) {
-		updateRegistry.unregisterUpdate(name);
-		mat4.fromRotationTranslationScale(sprite.transform, quat.create(), this.tgtPos, this.tgtScale);
-		if (typeof sprite.onOpen !== "undefined")
-			sprite.onOpen()
-	}
-}
-
-//animate the item when picked up
-export function itemFadeOutAnim(sprite, newSprite, name, tgtPos, tgtScale, frames) {
-	if (typeof this.cnt === "undefined")
-		this.cnt = 0;
-	else
-		this.cnt += 1;
-
-	if (typeof this.strtPos === "undefined")
-	{
-		this.strtPos = vec3.create();
-		mat4.getTranslation(this.strtPos, sprite.transform);
-	}
-	if (typeof this.strtScale === "undefined")
-	{
-		this.strtScale = vec3.create();
-		mat4.getScaling(this.strtScale, sprite.transform);
-	}
-
-	let pos = vec3.create()
-	vec3.lerp(pos, this.strtPos, tgtPos, this.cnt/frames)
-	let scale = vec3.create()
-	vec3.lerp(scale, this.strtScale, tgtScale, this.cnt/frames)
-
-	mat4.fromRotationTranslationScale(sprite.transform, quat.create(), pos, scale);
-
-	if (this.cnt >= frames) {
-		updateRegistry.unregisterUpdate(name);
-		mat4.fromRotationTranslationScale(sprite.transform, quat.create(), tgtPos, tgtScale);
-		menu.sprite = newSprite;
-	}
 }

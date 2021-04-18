@@ -1,8 +1,9 @@
 import {Sprite, Texture2D} from "./Sprite.js"
 import {GameObject, CollidableGameObject, DoorGameObject, Teleporter, Interactable, VerticalCollidableGameObject, ForceTeleporter} from "./GameObject.js"
-import {level, menu, setPlayer, player} from "./state.js"
+import {level, setPlayer, player} from "./state.js"
 import {mat4, vec2, vec3, quat} from "./gl-matrix-min.js"
 import {readJSON} from "./util.js"
+import {Menu} from "./menu.js"
 
 //global level scale
 const X_SCALE = 1//0.25
@@ -38,8 +39,9 @@ function initLevel(id, rawData) {
 
     // intro
     if (levelData["intro"]) {
-        menu.setSprite(new Sprite("assets/" + levelData["intro"]["spriteName"] + ".png", mat4.fromScaling(mat4.create(), vec3.fromValues(5, 5, 5))));
-        menu.cooldown = levelData["intro"]["duration"];
+        let intro = new Menu("assets/" + levelData["intro"]["spriteName"] + ".png", mat4.fromScaling(mat4.create(), vec3.fromValues(5, 5, 5)));
+        intro.cooldown = levelData["intro"]["duration"];
+        intro.open()
     }
 
     level.id = id;
@@ -95,7 +97,6 @@ function initLevel(id, rawData) {
 			break;
 		case "door":
             obj = new DoorGameObject(spriteName, pos1, size, "door", scale, offset, orientation);
-            obj.door = new Sprite("assets/Door.png", mat4.create());
 			level.objects.push(obj)
 			break;
 		case "interactable":

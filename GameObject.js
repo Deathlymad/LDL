@@ -1,9 +1,9 @@
 import {Sprite} from "./Sprite.js"
 import {mat4, vec2, vec3, quat} from "./gl-matrix-min.js"
 import {PositionalAudio, walk_wood} from "./audio.js"
-import {updateRegistry, menu} from "./state.js"
+import {updateRegistry, inventory} from "./state.js"
 import {getItemSprite} from "./item.js"
-import {pickUp} from "./inventory.js"
+import {Menu} from "./menu.js"
 
 //Preset Rotations of the object.
 export let Orientation = {
@@ -161,9 +161,10 @@ Object.defineProperty(Interactable.prototype, 'constructor', {
     writable: true });
 Interactable.prototype.onInteract = function(obj) {
     console.log("ping")
-    menu.setSprite(getItemSprite(this.pickup, mat4.fromScaling(mat4.create(), vec3.fromValues(5, 5, 5)), null, true));
-    menu.cooldown = -1;
-    pickUp(this);
+    let itemMenu = new Menu(this.pickup, mat4.fromScaling(mat4.create(), vec3.fromValues(5, 5, 5)), null, true);
+    itemMenu.open()
+    itemMenu.cooldown = -1;
+    inventory.pickUp(this);
 }
 Interactable.prototype.canInteract = function(obj) {
     return obj.isPlayer();
@@ -186,6 +187,7 @@ Teleporter.prototype.onInteract = function(obj) {
 export let DoorGameObject = function(spritePath, position, size, scale = vec2.fromValues(1, 1), offset = vec2.fromValues(0, 0), orientation = Orientation.DEFAULT) {
     GameObject.call(this, spritePath, position, size, "door", scale, offset, orientation);
     
+    this.door = new Sprite("assets/Door.png", mat4.create());
     this.timer = 0
 }
 DoorGameObject.prototype = Object.create(GameObject.prototype);

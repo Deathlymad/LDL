@@ -1,6 +1,5 @@
-import {level, player, menu} from "./state.js"
+import {level, player, inventory} from "./state.js"
 import {ITEM_SOUNDS} from "./item.js"
-import {pickUp, inventory} from "./inventory.js"
 import {vec2, mat4, vec3} from "./gl-matrix-min.js"
 import {Sprite} from "./Sprite.js"
 import {loadLevel} from "./level.js"
