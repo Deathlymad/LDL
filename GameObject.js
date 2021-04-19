@@ -2,7 +2,7 @@ import {Sprite} from "./Sprite.js"
 import {mat4, vec2, vec3, quat} from "./gl-matrix-min.js"
 import {PositionalAudio, walk_wood} from "./audio.js"
 import {updateRegistry, inventory} from "./state.js"
-import {getItemSprite} from "./item.js"
+import {getItemSprite, getItemMenuSprite} from "./item.js"
 import {Menu} from "./menu.js"
 
 //Preset Rotations of the object.
@@ -161,7 +161,7 @@ Object.defineProperty(Interactable.prototype, 'constructor', {
     writable: true });
 Interactable.prototype.onInteract = function(obj) {
     console.log("ping")
-    let itemMenu = new Menu(this.pickup, mat4.fromScaling(mat4.create(), vec3.fromValues(5, 5, 5)), null, true);
+    let itemMenu = getItemMenuSprite(this.pickup, mat4.fromScaling(mat4.create(), vec3.fromValues(5, 5, 5)), null, true);
     itemMenu.open()
     itemMenu.cooldown = -1;
     inventory.pickUp(this);

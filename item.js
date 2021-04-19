@@ -1,4 +1,5 @@
 import {Sprite} from "./Sprite.js"
+import {Menu} from "./menu.js"
 
 let ITEM_SPRITES = {
 	10 : "assets/lvl1/kids-drawing.png",
@@ -99,3 +100,24 @@ export function getItemSprite(id, transformation, parent, animate) {
 
 	return sprite
 }
+export function getItemMenuSprite(id, transformation, parent, animate) {
+	let sprite = new Menu(ITEM_SPRITES[id], transformation, parent)
+	sprite.item_id = id
+	if (typeof ITEM_SPRITE_FRAMES[id] !== "undefined")
+		sprite.texture.frames = ITEM_SPRITE_FRAMES[id]
+
+	if (typeof ITEM_SOUNDS[id] !== "undefined")
+		sprite.sound = new Audio(ITEM_SOUNDS[id])
+
+	if (typeof ITEM_TRIGGER[id] !== "undefined") {
+		sprite.onOpen = ITEM_TRIGGER[id].open.bind(sprite)
+		sprite.onClose = ITEM_TRIGGER[id].close.bind(sprite)
+	}
+	else {
+		sprite.onOpen = function() { if (typeof sprite.sound !== "undefined") sprite.sound.play()}
+		sprite.onClose = function() { if (typeof sprite.sound !== "undefined") sprite.sound.pause()}
+	}
+
+	return sprite
+}
+
